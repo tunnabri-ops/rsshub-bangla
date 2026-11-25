@@ -1,0 +1,37 @@
+# RSSHub server — docker-compose.yml
+# Upstream-এর docker-compose.yml থেকে নেওয়া (DIYgod/RSSHub, master):
+#   image: diygod/rsshub  |  ports: '1200:1200'
+#   healthcheck: curl -f http://localhost:1200/healthz
+#   CACHE_TYPE: redis + REDIS_URL: redis://redis:6379/
+#
+# সরল করা হয়েছে: browserless (Playwright) সার্ভিস বাদ দেওয়া হয়েছে —
+# JS-ভারী কিছু route-এর জন্য সেটা লাগে, সাধারণ নিউজ route-এর জন্য নয়।
+# দরকার হলে upstream compose-এ browserless সার্ভিসটি যোগ করে নিন:
+# https://github.com/DIYgod/RSSHub/blob/master/docker-compose.yml
+
+services:
+  rsshub:
+    image: diygod/rsshub
+    restart: unless-stopped
+    ports:
+      - "1200:1200"
+    environment:
+      NODE_ENV: production
+      CACHE_TYPE: redis
+      REDIS_URL: "redis://redis:6379/"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:1200/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
